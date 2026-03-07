@@ -246,6 +246,49 @@ Each machine gets a unique ID stored in `~/.hapi/settings.json`. This allows:
 If you prefer not to use the public relay (e.g., for lower latency or self-managed infrastructure), you can use these alternatives:
 
 <details>
+<summary>SSH local port forwarding (no relay)</summary>
+
+If you already have SSH access to the machine running HAPI, you can keep all traffic inside your own SSH connection.
+
+Run commands on two sides:
+
+- **Remote server (where HAPI runs):** start hub
+- **Client device (your laptop or phone):** open SSH tunnel
+
+On the remote machine, start the hub in local-only mode (loopback bind):
+
+```bash
+# from this repo
+./scripts/hapi-ssh-server.sh
+```
+
+On your client device (laptop/phone shell app), open a local forward:
+
+```bash
+# from this repo, or copy the command directly
+./scripts/hapi-ssh-tunnel.sh user@your-server 3006 3006
+
+# equivalent raw ssh command
+ssh -N -L 3006:127.0.0.1:3006 user@your-server
+```
+
+Then open:
+
+```
+http://localhost:3006
+```
+
+If your phone browser cannot create SSH tunnels directly, start the tunnel from another machine and then open that machine's forwarded localhost in a browser on the same machine.
+
+Notes:
+
+- This mode does **not** use the public relay.
+- Keep `HAPI_LISTEN_HOST=127.0.0.1` on the server for SSH-only access.
+- If you need PWA installation prompts, use HTTPS on a real hostname; plain HTTP localhost is still fine for direct browser use.
+
+</details>
+
+<details>
 <summary>Cloudflare Tunnel</summary>
 
 https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/
