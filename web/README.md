@@ -73,6 +73,7 @@ See `src/router.tsx` for route definitions.
 
 - ElevenLabs integration (@elevenlabs/react)
 - Real-time voice control
+- Hold-to-talk dictation with server-side transcription and spoken agent replies
 
 ### New session (`src/components/NewSession/`)
 

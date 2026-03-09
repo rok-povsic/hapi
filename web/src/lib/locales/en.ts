@@ -203,6 +203,7 @@ export default {
   'composer.send': 'Send',
   'composer.stop': 'Stop',
   'composer.voice': 'Voice assistant',
+  'composer.dictation': 'Hold to talk',
 
   // Voice assistant
   'voice.connecting': 'Connecting...',
@@ -219,6 +220,12 @@ export default {
   'voice.error.notAllowed': 'Voice not allowed',
   'voice.error.connection': 'Connection error',
   'voice.dismiss': 'Dismiss',
+
+  // Dictation voice
+  'dictation.recording': 'Recording…',
+  'dictation.transcribing': 'Transcribing…',
+  'dictation.speaking': 'Speaking…',
+  'dictation.error': 'Voice error',
 
   // Banners
   'offline.title': 'Offline',

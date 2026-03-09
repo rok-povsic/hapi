@@ -15,6 +15,7 @@ import { createAttachmentAdapter } from '@/lib/attachmentAdapter'
 import { SessionHeader } from '@/components/SessionHeader'
 import { TeamPanel } from '@/components/TeamPanel'
 import { usePlatform } from '@/hooks/usePlatform'
+import { useDictationVoice } from '@/hooks/useDictationVoice'
 import { useSessionActions } from '@/hooks/mutations/useSessionActions'
 import { useVoiceOptional } from '@/lib/voice-context'
 import { RealtimeVoiceSession, registerSessionStore, registerVoiceHooksStore, voiceHooks } from '@/realtime'
@@ -248,6 +249,13 @@ export function SessionChat(props: {
         setForceScrollToken((token) => token + 1)
     }, [props.onSend])
 
+    const dictation = useDictationVoice({
+        api: props.api,
+        session: props.session,
+        messages: props.messages,
+        onSend: (text) => handleSend(text)
+    })
+
     const attachmentAdapter = useMemo(() => {
         if (!props.session.active) {
             return undefined
@@ -331,6 +339,11 @@ export function SessionChat(props: {
                         voiceMicMuted={voice?.micMuted}
                         onVoiceToggle={voice ? handleVoiceToggle : undefined}
                         onVoiceMicToggle={voice ? handleVoiceMicToggle : undefined}
+                        dictationStatus={dictation.status}
+                        dictationErrorMessage={dictation.errorMessage}
+                        onDictationStart={dictation.startRecording}
+                        onDictationStop={dictation.stopRecording}
+                        onDictationDismissError={dictation.dismissError}
                     />
                 </div>
             </AssistantRuntimeProvider>

@@ -7,6 +7,9 @@
 
 export const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1'
 export const VOICE_AGENT_NAME = 'Hapi Voice Assistant'
+export const DEFAULT_VOICE_TTS_VOICE_ID = 'cgSgspJ2msm6clMCkdW9'
+export const DEFAULT_VOICE_TTS_MODEL_ID = 'eleven_flash_v2'
+export const DEFAULT_VOICE_STT_MODEL_ID = 'scribe_v1'
 
 export const VOICE_SYSTEM_PROMPT = `# Identity
 
@@ -237,8 +240,8 @@ export function buildVoiceAgentConfig(): VoiceAgentConfig {
                 silence_end_call_timeout: 600.0
             },
             tts: {
-                voice_id: 'cgSgspJ2msm6clMCkdW9', // Jessica
-                model_id: 'eleven_flash_v2',
+                voice_id: DEFAULT_VOICE_TTS_VOICE_ID, // Jessica
+                model_id: DEFAULT_VOICE_TTS_MODEL_ID,
                 speed: 1.1
             }
         },

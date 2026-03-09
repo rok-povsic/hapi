@@ -14,6 +14,7 @@ import {
 } from 'react'
 import type { AgentState, ModelMode, PermissionMode } from '@/types/api'
 import type { Suggestion } from '@/hooks/useActiveSuggestions'
+import type { DictationStatus } from '@/hooks/useDictationVoice'
 import type { ConversationStatus } from '@/realtime/types'
 import { useActiveWord } from '@/hooks/useActiveWord'
 import { useActiveSuggestions } from '@/hooks/useActiveSuggestions'
@@ -58,6 +59,11 @@ export function HappyComposer(props: {
     voiceMicMuted?: boolean
     onVoiceToggle?: () => void
     onVoiceMicToggle?: () => void
+    dictationStatus?: DictationStatus
+    dictationErrorMessage?: string | null
+    onDictationStart?: () => void
+    onDictationStop?: () => void
+    onDictationDismissError?: () => void
 }) {
     const { t } = useTranslation()
     const {
@@ -80,7 +86,12 @@ export function HappyComposer(props: {
         voiceStatus = 'disconnected',
         voiceMicMuted = false,
         onVoiceToggle,
-        onVoiceMicToggle
+        onVoiceMicToggle,
+        dictationStatus = 'idle',
+        dictationErrorMessage = null,
+        onDictationStart,
+        onDictationStop,
+        onDictationDismissError
     } = props
 
     // Use ?? so missing values fall back to default (destructuring defaults only handle undefined)
@@ -539,6 +550,8 @@ export function HappyComposer(props: {
                         permissionMode={permissionMode}
                         agentFlavor={agentFlavor}
                         voiceStatus={voiceStatus}
+                        dictationStatus={dictationStatus}
+                        dictationErrorMessage={dictationErrorMessage}
                     />
 
                     <div className="overflow-hidden rounded-[20px] bg-[var(--app-secondary-bg)]">
@@ -586,6 +599,12 @@ export function HappyComposer(props: {
                             voiceMicMuted={voiceMicMuted}
                             onVoiceToggle={onVoiceToggle ?? (() => {})}
                             onVoiceMicToggle={onVoiceMicToggle}
+                            dictationEnabled={isTouch && Boolean(onDictationStart && onDictationStop)}
+                            dictationStatus={dictationStatus}
+                            dictationErrorMessage={dictationErrorMessage}
+                            onDictationStart={onDictationStart}
+                            onDictationStop={onDictationStop}
+                            onDictationDismissError={onDictationDismissError}
                             onSend={handleSend}
                         />
                     </div>

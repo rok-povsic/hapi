@@ -212,6 +212,12 @@ export type PushVapidPublicKeyResponse = {
     publicKey: string
 }
 
+export type VoiceTranscriptionResponse = {
+    success: boolean
+    text?: string
+    error?: string
+}
+
 export type VisibilityPayload = {
     subscriptionId: string
     visibility: 'visible' | 'hidden'

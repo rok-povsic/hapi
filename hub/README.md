@@ -125,6 +125,8 @@ See `src/web/routes/` for all endpoints.
 ### Voice (`src/web/routes/voice.ts`)
 
 - `POST /api/voice/token` - Get ElevenLabs conversation token.
+- `POST /api/voice/transcribe` - Transcribe uploaded audio with ElevenLabs STT.
+- `POST /api/voice/speak` - Synthesize speech audio with ElevenLabs TTS.
 
 ### Push Notifications (`src/web/routes/push.ts`)
 

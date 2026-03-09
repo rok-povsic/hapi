@@ -19,6 +19,7 @@ import type {
     SpawnResponse,
     UploadFileResponse,
     VisibilityPayload,
+    VoiceTranscriptionResponse,
     SessionResponse,
     SessionsResponse
 } from '@/types/api'
@@ -94,7 +95,13 @@ export class ApiClient {
         if (authToken) {
             headers.set('authorization', `Bearer ${authToken}`)
         }
-        if (init?.body !== undefined && !headers.has('content-type')) {
+        if (
+            init?.body !== undefined
+            && !headers.has('content-type')
+            && !(init.body instanceof FormData)
+            && !(init.body instanceof Blob)
+            && !(init.body instanceof ArrayBuffer)
+        ) {
             headers.set('content-type', 'application/json')
         }
 
@@ -120,6 +127,54 @@ export class ApiClient {
         }
 
         return await res.json() as T
+    }
+
+    private async requestBlob(
+        path: string,
+        init?: RequestInit,
+        attempt: number = 0,
+        overrideToken?: string | null
+    ): Promise<Blob> {
+        const headers = new Headers(init?.headers)
+        const liveToken = this.getToken ? this.getToken() : null
+        const authToken = overrideToken !== undefined
+            ? (overrideToken ?? (liveToken ?? this.token))
+            : (liveToken ?? this.token)
+        if (authToken) {
+            headers.set('authorization', `Bearer ${authToken}`)
+        }
+        if (
+            init?.body !== undefined
+            && !headers.has('content-type')
+            && !(init.body instanceof FormData)
+            && !(init.body instanceof Blob)
+            && !(init.body instanceof ArrayBuffer)
+        ) {
+            headers.set('content-type', 'application/json')
+        }
+
+        const res = await fetch(this.buildUrl(path), {
+            ...init,
+            headers
+        })
+
+        if (res.status === 401) {
+            if (attempt === 0 && this.onUnauthorized) {
+                const refreshed = await this.onUnauthorized()
+                if (refreshed) {
+                    this.token = refreshed
+                    return await this.requestBlob(path, init, attempt + 1, refreshed)
+                }
+            }
+            throw new Error('Session expired. Please sign in again.')
+        }
+
+        if (!res.ok) {
+            const body = await res.text().catch(() => '')
+            throw new Error(`HTTP ${res.status} ${res.statusText}: ${body}`)
+        }
+
+        return await res.blob()
     }
 
     async authenticate(auth: { initData: string } | { accessToken: string }): Promise<AuthResponse> {
@@ -418,6 +473,43 @@ export class ApiClient {
         return await this.request('/api/voice/token', {
             method: 'POST',
             body: JSON.stringify(options || {})
+        })
+    }
+
+    async transcribeVoiceAudio(
+        file: File,
+        options?: { modelId?: string; languageCode?: string; customApiKey?: string }
+    ): Promise<VoiceTranscriptionResponse> {
+        const formData = new FormData()
+        formData.set('audio', file, file.name || 'recording.webm')
+        if (options?.modelId) {
+            formData.set('modelId', options.modelId)
+        }
+        if (options?.languageCode) {
+            formData.set('languageCode', options.languageCode)
+        }
+        if (options?.customApiKey) {
+            formData.set('customApiKey', options.customApiKey)
+        }
+
+        return await this.request<VoiceTranscriptionResponse>('/api/voice/transcribe', {
+            method: 'POST',
+            body: formData
+        })
+    }
+
+    async synthesizeVoiceSpeech(
+        text: string,
+        options?: { voiceId?: string; modelId?: string; customApiKey?: string }
+    ): Promise<Blob> {
+        return await this.requestBlob('/api/voice/speak', {
+            method: 'POST',
+            body: JSON.stringify({
+                text,
+                voiceId: options?.voiceId,
+                modelId: options?.modelId,
+                customApiKey: options?.customApiKey
+            })
         })
     }
 }

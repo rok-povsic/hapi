@@ -205,6 +205,7 @@ export default {
   'composer.send': '发送',
   'composer.stop': '停止',
   'composer.voice': '语音助手',
+  'composer.dictation': '按住说话',
 
   // Voice assistant
   'voice.connecting': '连接中...',
@@ -221,6 +222,12 @@ export default {
   'voice.error.notAllowed': '语音功能不可用',
   'voice.error.connection': '连接错误',
   'voice.dismiss': '关闭',
+
+  // Dictation voice
+  'dictation.recording': '录音中…',
+  'dictation.transcribing': '转写中…',
+  'dictation.speaking': '播放中…',
+  'dictation.error': '语音错误',
 
   // Banners
   'offline.title': '离线',

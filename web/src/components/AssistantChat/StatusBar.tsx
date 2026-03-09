@@ -2,6 +2,7 @@ import { getPermissionModeLabel, getPermissionModeTone, isPermissionModeAllowedF
 import type { PermissionModeTone } from '@hapi/protocol'
 import { useMemo } from 'react'
 import type { AgentState, ModelMode, PermissionMode } from '@/types/api'
+import type { DictationStatus } from '@/hooks/useDictationVoice'
 import type { ConversationStatus } from '@/realtime/types'
 import { getContextBudgetTokens } from '@/chat/modelConfig'
 import { useTranslation } from '@/lib/use-translation'
@@ -37,9 +38,47 @@ function getConnectionStatus(
     thinking: boolean,
     agentState: AgentState | null | undefined,
     voiceStatus: ConversationStatus | undefined,
+    dictationStatus: DictationStatus | undefined,
+    dictationErrorMessage: string | null | undefined,
     t: (key: string) => string
 ): { text: string; color: string; dotColor: string; isPulsing: boolean } {
     const hasPermissions = agentState?.requests && Object.keys(agentState.requests).length > 0
+
+    if (dictationStatus === 'recording') {
+        return {
+            text: t('dictation.recording'),
+            color: 'text-red-500',
+            dotColor: 'bg-red-500',
+            isPulsing: true
+        }
+    }
+
+    if (dictationStatus === 'transcribing') {
+        return {
+            text: t('dictation.transcribing'),
+            color: 'text-[#007AFF]',
+            dotColor: 'bg-[#007AFF]',
+            isPulsing: true
+        }
+    }
+
+    if (dictationStatus === 'speaking') {
+        return {
+            text: t('dictation.speaking'),
+            color: 'text-[#34C759]',
+            dotColor: 'bg-[#34C759]',
+            isPulsing: true
+        }
+    }
+
+    if (dictationStatus === 'error') {
+        return {
+            text: dictationErrorMessage || t('dictation.error'),
+            color: 'text-red-500',
+            dotColor: 'bg-red-500',
+            isPulsing: false
+        }
+    }
 
     // Voice connecting takes priority
     if (voiceStatus === 'connecting') {
@@ -110,11 +149,21 @@ export function StatusBar(props: {
     permissionMode?: PermissionMode
     agentFlavor?: string | null
     voiceStatus?: ConversationStatus
+    dictationStatus?: DictationStatus
+    dictationErrorMessage?: string | null
 }) {
     const { t } = useTranslation()
     const connectionStatus = useMemo(
-        () => getConnectionStatus(props.active, props.thinking, props.agentState, props.voiceStatus, t),
-        [props.active, props.thinking, props.agentState, props.voiceStatus, t]
+        () => getConnectionStatus(
+            props.active,
+            props.thinking,
+            props.agentState,
+            props.voiceStatus,
+            props.dictationStatus,
+            props.dictationErrorMessage,
+            t
+        ),
+        [props.active, props.thinking, props.agentState, props.voiceStatus, props.dictationStatus, props.dictationErrorMessage, t]
     )
 
     const contextWarning = useMemo(

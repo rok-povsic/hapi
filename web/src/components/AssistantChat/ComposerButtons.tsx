@@ -1,4 +1,6 @@
 import { ComposerPrimitive } from '@assistant-ui/react'
+import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import type { DictationStatus } from '@/hooks/useDictationVoice'
 import type { ConversationStatus } from '@/realtime/types'
 import { useTranslation } from '@/lib/use-translation'
 
@@ -21,6 +23,27 @@ function VoiceAssistantIcon() {
             <path d="M16 9v6" />
             <path d="M4 11v2" />
             <path d="M20 11v2" />
+        </svg>
+    )
+}
+
+function MicrophoneIcon(props: { active?: boolean }) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill={props.active ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <rect x="9" y="3" width="6" height="12" rx="3" />
+            <path d="M5 11a7 7 0 0 0 14 0" />
+            <path d="M12 18v3" />
+            <path d="M8 21h8" />
         </svg>
     )
 }
@@ -254,7 +277,7 @@ function UnifiedButton(props: {
     }
 
     // Determine button style and icon
-    let icon: React.ReactNode
+    let icon: ReactNode
     let className: string
     let ariaLabel: string
 
@@ -296,6 +319,94 @@ function UnifiedButton(props: {
     )
 }
 
+function DictationButton(props: {
+    enabled: boolean
+    disabled: boolean
+    status: DictationStatus
+    errorMessage?: string | null
+    onStart?: () => void
+    onStop?: () => void
+    onDismissError?: () => void
+}) {
+    const { t } = useTranslation()
+    const activePointerIdRef = useRef<number | null>(null)
+
+    if (!props.enabled) {
+        return null
+    }
+
+    const isRecording = props.status === 'recording'
+    const isTranscribing = props.status === 'transcribing'
+    const isSpeaking = props.status === 'speaking'
+    const isError = props.status === 'error'
+
+    const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+        if (props.disabled || isTranscribing || !props.onStart) {
+            if (isError && props.onDismissError) {
+                props.onDismissError()
+            }
+            return
+        }
+
+        event.preventDefault()
+        activePointerIdRef.current = event.pointerId
+        event.currentTarget.setPointerCapture?.(event.pointerId)
+        props.onStart()
+    }
+
+    const handlePointerEnd = (event: ReactPointerEvent<HTMLButtonElement>) => {
+        if (activePointerIdRef.current !== event.pointerId) {
+            return
+        }
+
+        event.preventDefault()
+        activePointerIdRef.current = null
+        if (isRecording) {
+            props.onStop?.()
+        }
+    }
+
+    let className = 'text-[var(--app-fg)]/60 hover:bg-[var(--app-bg)] hover:text-[var(--app-fg)]'
+    let ariaLabel = t('composer.dictation')
+
+    if (isRecording) {
+        className = 'bg-red-500 text-white'
+        ariaLabel = t('dictation.recording')
+    } else if (isTranscribing) {
+        className = 'bg-[#007AFF] text-white'
+        ariaLabel = t('dictation.transcribing')
+    } else if (isSpeaking) {
+        className = 'bg-[#34C759] text-white'
+        ariaLabel = t('dictation.speaking')
+    } else if (isError) {
+        className = 'bg-red-100 text-red-600 hover:bg-red-200'
+        ariaLabel = props.errorMessage || t('dictation.error')
+    }
+
+    return (
+        <button
+            type="button"
+            aria-label={ariaLabel}
+            title={ariaLabel}
+            disabled={props.disabled || isTranscribing}
+            className={`flex h-8 w-8 touch-none select-none items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerEnd}
+            onPointerCancel={handlePointerEnd}
+            onLostPointerCapture={handlePointerEnd}
+            onContextMenu={(event) => event.preventDefault()}
+            onClick={(event) => {
+                event.preventDefault()
+                if (isError) {
+                    props.onDismissError?.()
+                }
+            }}
+        >
+            {isTranscribing ? <LoadingIcon /> : <MicrophoneIcon active={isRecording} />}
+        </button>
+    )
+}
+
 export function ComposerButtons(props: {
     canSend: boolean
     controlsDisabled: boolean
@@ -317,6 +428,12 @@ export function ComposerButtons(props: {
     voiceMicMuted?: boolean
     onVoiceToggle: () => void
     onVoiceMicToggle?: () => void
+    dictationEnabled: boolean
+    dictationStatus: DictationStatus
+    dictationErrorMessage?: string | null
+    onDictationStart?: () => void
+    onDictationStop?: () => void
+    onDictationDismissError?: () => void
     onSend: () => void
 }) {
     const { t } = useTranslation()
@@ -385,6 +502,16 @@ export function ComposerButtons(props: {
                         <SwitchToRemoteIcon />
                     </button>
                 ) : null}
+
+                <DictationButton
+                    enabled={props.dictationEnabled}
+                    disabled={props.controlsDisabled || props.voiceStatus === 'connected' || props.voiceStatus === 'connecting'}
+                    status={props.dictationStatus}
+                    errorMessage={props.dictationErrorMessage}
+                    onStart={props.onDictationStart}
+                    onStop={props.onDictationStop}
+                    onDismissError={props.onDictationDismissError}
+                />
 
                 {isVoiceConnected && props.onVoiceMicToggle ? (
                     <button
