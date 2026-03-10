@@ -36,6 +36,11 @@ interface ElevenLabsAgent {
     name: string
 }
 
+function getOptionalFormString(formData: FormData, key: string): string | undefined {
+    const value = formData.get(key)
+    return typeof value === 'string' && value.trim() ? value : undefined
+}
+
 function resolveApiKey(customApiKey?: string): string | null {
     return customApiKey || process.env.ELEVENLABS_API_KEY || null
 }
@@ -250,9 +255,9 @@ export function createVoiceRoutes(): Hono<WebAppEnv> {
         }
 
         const parsed = transcribeFieldsSchema.safeParse({
-            modelId: formData.get('modelId'),
-            languageCode: formData.get('languageCode'),
-            customApiKey: formData.get('customApiKey')
+            modelId: getOptionalFormString(formData, 'modelId'),
+            languageCode: getOptionalFormString(formData, 'languageCode'),
+            customApiKey: getOptionalFormString(formData, 'customApiKey')
         })
         if (!parsed.success) {
             return c.json({ success: false, error: 'Invalid transcription request' }, 400)
